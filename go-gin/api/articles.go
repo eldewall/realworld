@@ -27,7 +27,7 @@ func postArticleHandler(c *gin.Context) {
 			"error": err.Error(),
 		})
 	} else {
-		c.JSON(201, envelop.Article)
+		c.JSON(201, envelop)
 	}
 }
 

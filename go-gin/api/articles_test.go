@@ -14,6 +14,7 @@ import (
 func postJSON(r http.Handler, path string, data interface{}) *httptest.ResponseRecorder {
 	b, _ := json.Marshal(data)
 	req, _ := http.NewRequest("POST", path, bytes.NewBuffer(b))
+
 	rec := httptest.NewRecorder()
 
 	r.ServeHTTP(rec, req)
@@ -29,16 +30,25 @@ func TestArticlesAPI(t *testing.T) {
 
 		Use(api)
 
+		envelop := ArticleEnvelope{
+			Article: Article{
+				Title:       "How to train your dragon",
+				Description: "Ever wonder how?",
+			}}
+
 		Convey("Posting a new Article", func() {
-			envelop := ArticleEnvelope{
-				Article: Article{
-					Title:       "How to train your dragon",
-					Description: "Ever wonder how?",
-				}}
-			response := postJSON(api, "/articles", envelop)
+			response := postJSON(api, "/articles/", envelop)
 
 			So(response.Code, ShouldEqual, 201)
-			So(response.Body.String(), ShouldEqual, "Foo")
+
+			Convey("Response", func() {
+				var r ArticleEnvelope
+
+				err := json.Unmarshal(response.Body.Bytes(), &r)
+
+				So(err, ShouldBeNil)
+				So(r, ShouldResemble, envelop)
+			})
 		})
 	})
 }
