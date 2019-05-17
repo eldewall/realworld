@@ -8,5 +8,8 @@ import (
 
 func main() {
 	server := gin.Default()
+
+	a := api.New()
+
 	api.Use(server)
 }

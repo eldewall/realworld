@@ -8,8 +8,39 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
+
+type ArticlesSuite struct {
+	suite.Suite
+	API *gin.Engine
+}
+
+func (s *ArticlesSuite) SetupTest() {
+	gin.SetMode(gin.TestMode)
+
+	s.API = gin.Default()
+
+	Use(s.API)
+}
+
+func (s *ArticlesSuite) TestPost() {
+	envelop := ArticleEnvelope{
+		Article: Article{
+			Title:       "How to train your dragon",
+			Description: "Ever wonder how?",
+		}}
+
+	r := postJSON(s.API, "/articles/", envelop)
+
+	var received ArticleEnvelope
+
+	json.Unmarshal(r.Body.Bytes(), &received)
+
+	assert.Equal(s.T(), envelop, received)
+	assert.Equal(s.T(), r.Code, 201)
+}
 
 func postJSON(r http.Handler, path string, data interface{}) *httptest.ResponseRecorder {
 	b, _ := json.Marshal(data)
@@ -22,33 +53,6 @@ func postJSON(r http.Handler, path string, data interface{}) *httptest.ResponseR
 	return rec
 }
 
-func TestArticlesAPI(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-
-	Convey("Creating an article", t, func() {
-		api := gin.Default()
-
-		Use(api)
-
-		envelop := ArticleEnvelope{
-			Article: Article{
-				Title:       "How to train your dragon",
-				Description: "Ever wonder how?",
-			}}
-
-		Convey("Posting a new Article", func() {
-			response := postJSON(api, "/articles/", envelop)
-
-			So(response.Code, ShouldEqual, 201)
-
-			Convey("Response", func() {
-				var r ArticleEnvelope
-
-				err := json.Unmarshal(response.Body.Bytes(), &r)
-
-				So(err, ShouldBeNil)
-				So(r, ShouldResemble, envelop)
-			})
-		})
-	})
+func TestArticlesSuite(t *testing.T) {
+	suite.Run(t, new(ArticlesSuite))
 }
